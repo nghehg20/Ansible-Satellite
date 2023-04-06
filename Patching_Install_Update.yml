@@ -1,0 +1,39 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: false
+  tasks:
+  - name: "List installable errata for host"
+    redhat.satellite.host_errata_info:
+      username: "{{ sat_publisher_username }}"
+      password: "{{ sat_publisher_password }}"
+      server_url: "{{ sat_server_url }}"
+      validate_certs: "{{ sat_validate_certs }}"
+      host: "{{ host_name }}"
+    register: result
+
+  - copy: content="{{ result | json_query('host_errata[*].errata_id') | join(',') }}" dest="/root/test.json"
+  - name: Replace
+    ansible.builtin.replace:
+      dest: /root/test.json
+      regexp: ' '
+      replace: ','
+  - name: Replace 
+    ansible.builtin.replace:
+      dest: /root/test.json
+      regexp: '"'
+      replace: ''
+  - shell:  cat /root/test.json
+    register: errata
+  - name: "Run remote command on a single host once"
+    redhat.satellite.job_invocation:
+      username: "{{ sat_publisher_username }}"
+      password: "{{ sat_publisher_password }}"
+      server_url: "{{ sat_server_url }}"
+      validate_certs: "{{ sat_validate_certs }}"
+      search_query: "{{ host_name }}"
+      inputs:
+        errata: "{{ errata.stdout }}"
+      job_template: "Install Errata - Katello Ansible Default"
+      ssh:
+        effective_user: "root"

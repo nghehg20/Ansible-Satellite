@@ -1,0 +1,71 @@
+---
+- hosts: all
+#  connection: local
+  gather_facts: false
+  collections:
+    - redhat.satellite
+  tasks:
+#  - name: "Create or update Fedora content view"
+#    redhat.satellite.content_view:
+#      username: "admin"
+#      password: "Admin@123"
+#      server_url: "https://10.1.32.6"
+#      validate_certs: false
+#      name: "Fedora CV"
+#      organization: "TCT"
+
+#  - name: "List applicable errata for host"
+#    redhat.satellite.host_errata_info:
+#      username: "admin"
+#      password: "Admin@123"
+#      server_url: "https://10.1.32.6"
+#      organization: "TCT"
+#      host: "client8.6-lab"
+#      lifecycle_environment: "Lab"
+#      content_view: "contentview01"
+#      validate_certs: false
+
+  - name: "List installable errata for host"
+    redhat.satellite.host_errata_info:
+      username: "admin"
+      password: "Admin@123"
+      server_url: "https://10.1.32.6"
+      host: "client8.6-lab"
+      validate_certs: false
+    register: result
+
+  - copy: content="{{ result | json_query('host_errata[*].errata_id') | join(',') }}" dest="/root/test1.json"
+#  - copy: content="{{ result | to_json }}" dest="/root/test.json"
+#  - name: Cat file
+#    shell: cat /root/test.json | jq '.host_errata[].errata_id' | xargs
+#    register: erratai
+  - name: Test
+    ansible.builtin.replace:
+      dest: /root/test1.json
+      regexp: ' '
+      replace: ','
+  - name: Test
+    ansible.builtin.replace:
+      dest: /root/test1.json
+      regexp: '"'
+      replace: ''
+
+  - shell:  cat /root/test1.json
+    register: errata
+
+
+  - name: "Run remote command on a single host once"
+    redhat.satellite.job_invocation:
+      username: "admin"
+      password: "Admin@123"
+      server_url: "https://10.1.32.6"
+      validate_certs: false
+      search_query: "name ^ (client8.6-lab)"
+#      inputs: "Errata search query: errata_id ^ (RHSA-2023:1405)"
+#      inputs: /errata
+#      search_query: "errata_id ^ (RHSA-2023:1405)"
+      inputs:
+        errata: "{{ errata.stdout }}"
+      job_template: "Install Errata - Katello Ansible Default"
+      ssh:
+        effective_user: "root"

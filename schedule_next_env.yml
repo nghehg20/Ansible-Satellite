@@ -1,0 +1,23 @@
+---
+- name: schedule next lifecycle patching
+  hosts: localhost
+  connection: local
+  tasks:
+  - name: set rrule variable to be 7 days from today
+    set_fact:
+      next_cycle_date: "{{ '%Y%m%d' | strftime( ( ansible_date_time.epoch | int ) + ( 86400 * 7 )  ) }}"
+
+  - name: schedule next patch group
+    uri:
+      url: "https://10.1.14.12/api/v2/workflow_job_templates/{{ next_sat_env }}/schedules/"
+      method: POST
+      body:
+        name: "Linux_patching_{{ next_cycle_date }}"
+        rrule: "DTSTART:{{ next_cycle_date }}T040000Z RRULE:FREQ=DAILY;INTERVAL=1;COUNT=1"
+        enabled: true
+      body_format: json
+      force_basic_auth: yes
+      status_code: 201
+      user: "admin"
+      password: "abc123"
+      validate_certs: no

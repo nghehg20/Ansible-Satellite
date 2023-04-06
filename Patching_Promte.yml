@@ -1,0 +1,18 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: false
+#  collections:
+#    - redhat.satellite
+  tasks:
+  - name: Promote the configured content views
+    redhat.satellite.content_view_version:
+      username: "{{ sat_publisher_username }}"
+      password: "{{ sat_publisher_password }}"
+      server_url: "{{ sat_server_url }}"
+      organization: "{{ sat_organization }}"
+      validate_certs: "{{ sat_validate_certs }}"
+      content_view: "{{ cv_name }}"
+      description: "{{ description }}"
+      current_lifecycle_environment: "{{ current_lce }}"
+      lifecycle_environments: "{{ target_lce }}"

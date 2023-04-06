@@ -1,0 +1,18 @@
+---
+- hosts: all
+#  connection: local
+  gather_facts: false
+  tasks:
+  - name: "Run remote command on a single host once"
+    redhat.satellite.job_invocation:
+      username: "{{ sat_publisher_username }}"
+      password: "{{ sat_publisher_password }}"
+      server_url: "{{ sat_server_url }}"
+      validate_certs: "{{ sat_validate_certs }}"
+#      search_query: "{{ HOST }}"
+      search_query:  "hostgroup = {{ host_gr_name }}"
+#      bookmark: "{{ host_gr_name }}"
+      command: 'dnf uploadprofile --force-upload'
+      job_template: "Run Command - Ansible Default"
+      ssh:
+        effective_user: "root"
