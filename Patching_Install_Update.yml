@@ -12,17 +12,10 @@
       host: "{{ host_name }}"
     register: result
 
-  - copy: content="{{ result | json_query('host_errata[*].errata_id') | join(',') }}" dest="/root/test.json"
-  - name: Replace
-    ansible.builtin.replace:
-      dest: /root/test.json
-      regexp: ' '
-      replace: ','
-  - name: Replace 
-    ansible.builtin.replace:
-      dest: /root/test.json
-      regexp: '"'
-      replace: ''
+  - debug:
+      msg: "{{ result | json_query('host_errata[*].errata_id') | join(',') }}"
+    register: errata_id
+
   - shell:  cat /root/test.json
     register: errata
   - name: "Run remote command on a single host once"
@@ -33,7 +26,7 @@
       validate_certs: "{{ sat_validate_certs }}"
       search_query: "{{ host_name }}"
       inputs:
-        errata: "{{ errata.stdout }}"
+        errata: "{{ errata_id.msg }}"
       job_template: "Install Errata - Katello Ansible Default"
       ssh:
         effective_user: "root"
