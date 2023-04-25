@@ -16,8 +16,6 @@
       msg: "{{ result | json_query('host_errata[*].errata_id') | join(',') }}"
     register: errata_id
 
-  - shell:  cat /root/test.json
-    register: errata
   - name: "Run remote command on a single host once"
     redhat.satellite.job_invocation:
       username: "{{ sat_publisher_username }}"
