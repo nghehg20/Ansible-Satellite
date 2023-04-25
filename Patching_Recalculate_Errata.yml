@@ -15,4 +15,4 @@
       command: 'dnf uploadprofile --force-upload'
       job_template: "Run Command - Ansible Default"
       ssh:
-        effective_user: "automation"
+        effective_user: "root"
